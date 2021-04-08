@@ -27,17 +27,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+// white0dew finished
 
 #include <stdlib.h>
 #include "adlist.h"
 #include "zmalloc.h"
 
-/* Create a new list. The created list can be freed with
- * AlFreeList(), but private value of every node need to be freed
- * by the user before to call AlFreeList().
- *
- * On error, NULL is returned. Otherwise the pointer to the new list. */
 /*
  * 创建一个新的链表
  *
@@ -63,12 +58,9 @@ list *listCreate(void)
     return list;
 }
 
-/* Free the whole list.
- *
- * This function can't fail. */
 /*
  * 释放整个链表，以及链表中所有节点
- *
+ * 需要注意的是zfree()函数
  * T = O(N)
  */
 void listRelease(list *list)
@@ -84,6 +76,7 @@ void listRelease(list *list)
         next = current->next;
 
         // 如果有设置值释放函数，那么调用它
+        // 这是因为链表节点所指向的值可能也需要被释放
         if (list->free) list->free(current->value);
 
         // 释放节点结构
@@ -96,19 +89,10 @@ void listRelease(list *list)
     zfree(list);
 }
 
-/* Add a new node to the list, to head, contaning the specified 'value'
- * pointer as value.
- *
- * On error, NULL is returned and no operation is performed (i.e. the
- * list remains unaltered).
- * On success the 'list' pointer you pass to the function is returned. */
 /*
  * 将一个包含有给定值指针 value 的新节点添加到链表的表头
- *
  * 如果为新节点分配内存出错，那么不执行任何动作，仅返回 NULL
- *
  * 如果执行成功，返回传入的链表指针
- *
  * T = O(1)
  */
 list *listAddNodeHead(list *list, void *value)
@@ -127,6 +111,7 @@ list *listAddNodeHead(list *list, void *value)
         list->head = list->tail = node;
         node->prev = node->next = NULL;
     // 添加节点到非空链表
+    // 这个必须学习
     } else {
         node->prev = NULL;
         node->next = list->head;
@@ -140,12 +125,6 @@ list *listAddNodeHead(list *list, void *value)
     return list;
 }
 
-/* Add a new node to the list, to tail, containing the specified 'value'
- * pointer as value.
- *
- * On error, NULL is returned and no operation is performed (i.e. the
- * list remains unaltered).
- * On success the 'list' pointer you pass to the function is returned. */
 /*
  * 将一个包含有给定值指针 value 的新节点添加到链表的表尾
  *
@@ -235,10 +214,6 @@ list *listInsertNode(list *list, listNode *old_node, void *value, int after) {
     return list;
 }
 
-/* Remove the specified node from the specified list.
- * It's up to the caller to free the private value of the node.
- *
- * This function can't fail. */
 /*
  * 从链表 list 中删除给定节点 node 
  * 
@@ -262,18 +237,12 @@ void listDelNode(list *list, listNode *node)
 
     // 释放值
     if (list->free) list->free(node->value);
-
     // 释放节点
     zfree(node);
-
     // 链表数减一
     list->len--;
 }
 
-/* Returns a list iterator 'iter'. After the initialization every
- * call to listNext() will return the next element of the list.
- *
- * This function can't fail. */
 /*
  * 为给定链表创建一个迭代器，
  * 之后每次对这个迭代器调用 listNext 都返回被迭代到的链表节点
@@ -335,25 +304,9 @@ void listRewindTail(list *list, listIter *li) {
     li->direction = AL_START_TAIL;
 }
 
-/* Return the next element of an iterator.
- * It's valid to remove the currently returned element using
- * listDelNode(), but not to remove other elements.
- *
- * The function returns a pointer to the next element of the list,
- * or NULL if there are no more elements, so the classical usage patter
- * is:
- *
- * iter = listGetIterator(list,<direction>);
- * while ((node = listNext(iter)) != NULL) {
- *     doSomethingWith(listNodeValue(node));
- * }
- *
- * */
 /*
  * 返回迭代器当前所指向的节点。
- *
  * 删除当前节点是允许的，但不能修改链表里的其他节点。
- *
  * 函数要么返回一个节点，要么返回 NULL ，常见的用法是：
  *
  * iter = listGetIterator(list,<direction>);
@@ -380,20 +333,10 @@ listNode *listNext(listIter *iter)
     return current;
 }
 
-/* Duplicate the whole list. On out of memory NULL is returned.
- * On success a copy of the original list is returned.
- *
- * The 'Dup' method set with listSetDupMethod() function is used
- * to copy the node value. Otherwise the same pointer value of
- * the original node is used as value of the copied node.
- *
- * The original list both on success or error is never modified. */
 /*
  * 复制整个链表。
- *
  * 复制成功返回输入链表的副本，
  * 如果因为内存不足而造成复制失败，返回 NULL 。
- *
  * 如果链表有设置值复制函数 dup ，那么对值的复制将使用复制函数进行，
  * 否则，新节点将和旧节点共享同一个指针。
  *
@@ -447,18 +390,8 @@ list *listDup(list *orig)
     return copy;
 }
 
-/* Search the list for a node matching a given key.
- * The match is performed using the 'match' method
- * set with listSetMatchMethod(). If no 'match' method
- * is set, the 'value' pointer of every node is directly
- * compared with the 'key' pointer.
- *
- * On success the first matching node pointer is returned
- * (search starts from head). If no matching node exists
- * NULL is returned. */
 /* 
  * 查找链表 list 中值和 key 匹配的节点。
- * 
  * 对比操作由链表的 match 函数负责进行，
  * 如果没有设置 match 函数，
  * 那么直接通过对比值的指针来决定是否匹配。
@@ -499,16 +432,10 @@ listNode *listSearchKey(list *list, void *key)
     return NULL;
 }
 
-/* Return the element at the specified zero-based index
- * where 0 is the head, 1 is the element next to head
- * and so on. Negative integers are used in order to count
- * from the tail, -1 is the last element, -2 the penultimate
- * and so on. If the index is out of range NULL is returned. */
+
 /*
  * 返回链表在给定索引上的值。
- *
  * 索引以 0 为起始，也可以是负数， -1 表示链表最后一个节点，诸如此类。
- *
  * 如果索引超出范围（out of range），返回 NULL 。
  *
  * T = O(N)
