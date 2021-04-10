@@ -32,17 +32,9 @@
  * Sorted set API
  *----------------------------------------------------------------------------*/
 
-/* ZSETs are ordered sets using two data structures to hold the same elements
- * in order to get O(log(N)) INSERT and REMOVE operations into a sorted
- * data structure.
- *
+/*
  * ZSET 同时使用两种数据结构来持有同一个元素，
  * 从而提供 O(log(N)) 复杂度的有序数据结构的插入和移除操作。
- *
- * The elements are added to a hash table mapping Redis objects to scores.
- * At the same time the elements are added to a skip list mapping scores
- * to Redis objects (so objects are sorted by scores in this "view"). 
- *
  * 哈希表将 Redis 对象映射到分值上。
  * 而跳跃表则将分值映射到 Redis 对象上，
  * 以跳跃表的视角来看，可以说 Redis 对象是根据分值来排序的。
@@ -165,14 +157,8 @@ void zslFree(zskiplist *zsl) {
     zfree(zsl);
 }
 
-/* Returns a random level for the new skiplist node we are going to create.
- *
+/* 
  * 返回一个随机值，用作新跳跃表节点的层数。
- *
- * The return value of this function is between 1 and ZSKIPLIST_MAXLEVEL
- * (both inclusive), with a powerlaw-alike distribution where higher
- * levels are less likely to be returned. 
- *
  * 返回值介乎 1 和 ZSKIPLIST_MAXLEVEL 之间（包含 ZSKIPLIST_MAXLEVEL），
  * 根据随机算法所使用的幂次定律，越大的值生成的几率越小。
  *
@@ -524,18 +510,9 @@ zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range) {
 /* Delete all the elements with score between min and max from the skiplist.
  *
  * 删除所有分值在给定范围之内的节点。
- *
- * Min and max are inclusive, so a score >= min || score <= max is deleted.
- * 
  * min 和 max 参数都是包含在范围之内的，所以分值 >= min 或 <= max 的节点都会被删除。
- *
- * Note that this function takes the reference to the hash table view of the
- * sorted set, in order to remove the elements from the hash table too.
- *
  * 节点不仅会从跳跃表中删除，而且会从相应的字典中删除。
- *
  * 返回值为被删除节点的数量
- *
  * T = O(N)
  */
 unsigned long zslDeleteRangeByScore(zskiplist *zsl, zrangespec *range, dict *dict) {
